@@ -1,11 +1,9 @@
 # -*- encoding: utf-8 -*-
 
-import datetime
 import os
 import re
 import subprocess
-import threading
-import time
+from functools import wraps
 try:
     from HTMLParser import HTMLParser
 except:
@@ -69,16 +67,17 @@ class CheckError():
 
         return HTMLParser().unescape(data)
 
-class BaseChecker:
+class BaseLinter(object):
     __metaclass__ = abc.ABCMeta
 
-    def save_content(self, content):
-        file_name = "temp.{ext}".format(ext=self.file_extension)
-        with open(file_name, "a+") as f:
+    def lint(self, content):
+        with open(self.temp_file, "w") as f:
             f.write(content)
-            # os.remove(file_name)
+            
+        return self._lint()
+        os.remove(self.temp_file)
 
-    def shell_out(self, cmd):
+    def _shell_out(self, cmd):
         data = None
         info = None
         home = expanduser("~")
@@ -87,32 +86,44 @@ class BaseChecker:
 
         if proc.stdout:
             data = proc.communicate()[0]
-            self.parse_report(data)
+            self._parse_report(data)
 
         return data
     
     @abc.abstractmethod
-    def check(self, content):
+    def _lint(self):
         """Метод реализующий получение ответа от низкоуровнего проверяльщика"""
         return
 
     @abc.abstractmethod
-    def parse_report(self, report_data):
+    def _parse_report(self, report_data):
         """Метод реализующий парсинг ответа от низкоуровнего проверяльщика"""
         return
 
-class CheckPhp(BaseChecker):
+class CheckPhp():
     def __init__(self):
-        self.file_extension = 'php'
         self.errors_list = []
 
     def check(self, content):
         """
         """
-        self.save_content(content)
-        self.shell_out(['phpcs', '--report=checkstyle', '/home/www/checker.codestyle.dev.webpp.ru/docs/codestyle/checker/temp.php'])
+        self.errors_list = PhpCodeSniffer().lint(content)
 
-    def parse_report(self, report_data):
+class PhpCodeSniffer(BaseLinter):
+    def __init__(self):
+        self.file_extension = 'php'
+        self.temp_file = os.path.abspath(os.path.join(os.getcwd(), "temp_file_to_check.{ext}".format(ext=self.file_extension)))
+        self.errors_list = []
+
+    def _lint(self):
+        """
+        """
+        # формирование аргументов вызова
+
+        self._shell_out(['phpcs', '--report=checkstyle', self.temp_file])
+        return self.errors_list
+
+    def _parse_report(self, report_data):
         expression = r'.*line="(?P<line>\d+)" column="(?P<column>\d+)" severity="(?P<severity>\w+)" message="(?P<message>.*)" source="(?P<type>.*)"'
         lines = re.finditer(expression, report_data)
 
@@ -130,10 +141,26 @@ class CheckPhp(BaseChecker):
             error = CheckError(**args)
             self.errors_list.append(error)
 
-# print os.getcwd()
 
 if __name__ == "__main__":
     content = open('/home/www/checker.codestyle.dev.webpp.ru/docs/codestyle/examples/phpcs.php', 'r').read()
     checker = CheckPhp()
     checker.check(content)
     print len(checker.errors_list)
+
+    # c = "echo \"{0}\" >  e.php".format(content)
+
+    # c = "echo \"hello\" >  e.php"
+
+    # print c
+
+    # p = subprocess.Popen([c], stdout=subprocess.PIPE)
+
+    # if p.stdout:
+    #     data = p.communicate()[0]
+    #     print data
+
+    # content = open('/home/www/checker.codestyle.dev.webpp.ru/docs/codestyle/examples/phpcs.php', 'r').read()
+    # checker = CheckPhp()
+    # checker.check(content)
+    # print len(checker.errors_list)
