@@ -3,7 +3,7 @@
 import os
 import re
 import subprocess
-from functools import wraps
+# from functools import wraps
 try:
     from HTMLParser import HTMLParser
 except:
@@ -11,6 +11,7 @@ except:
 from os.path import expanduser
 
 import abc
+
 
 class CheckError():
     """Класс представления ошибки"""
@@ -22,7 +23,6 @@ class CheckError():
         self.message = None
         self.severity = None
         self.type = None
-
 
         # Линия начала ошибки
         if 'line_start' in kwargs.keys():
@@ -52,7 +52,6 @@ class CheckError():
         if 'type' in kwargs.keys():
             self.type = kwargs['type']
 
-
     def get_line(self):
         return self.line
 
@@ -67,15 +66,18 @@ class CheckError():
 
         return HTMLParser().unescape(data)
 
+
 class BaseLinter(object):
     __metaclass__ = abc.ABCMeta
 
     def lint(self, content):
         with open(self.temp_file, "w") as f:
             f.write(content)
-            
-        return self._lint()
+
+        result = self._lint()
         os.remove(self.temp_file)
+
+        return result
 
     def _shell_out(self, cmd):
         data = None
@@ -89,7 +91,7 @@ class BaseLinter(object):
             self._parse_report(data)
 
         return data
-    
+
     @abc.abstractmethod
     def _lint(self):
         """Метод реализующий получение ответа от низкоуровнего проверяльщика"""
@@ -100,6 +102,7 @@ class BaseLinter(object):
         """Метод реализующий парсинг ответа от низкоуровнего проверяльщика"""
         return
 
+
 class CheckPhp():
     def __init__(self):
         self.errors_list = []
@@ -107,7 +110,9 @@ class CheckPhp():
     def check(self, content):
         """
         """
-        self.errors_list = PhpCodeSniffer().lint(content)
+        self.errors_list += PhpCodeSniffer().lint(content)
+        self.errors_list += PhpMessDetector().lint(content)
+
 
 class PhpCodeSniffer(BaseLinter):
     def __init__(self):
@@ -142,11 +147,45 @@ class PhpCodeSniffer(BaseLinter):
             self.errors_list.append(error)
 
 
+class PhpMessDetector(BaseLinter):
+    def __init__(self):
+        self.file_extension = 'php'
+        self.temp_file = os.path.abspath(os.path.join(os.getcwd(), "temp_file_to_check.{ext}".format(ext=self.file_extension)))
+        self.errors_list = []
+
+    def _lint(self):
+        """
+        """
+        # формирование аргументов вызова
+
+        self._shell_out(['phpmd', self.temp_file, 'text', 'codesize,unusedcode,naming'])
+        return self.errors_list
+
+    def _parse_report(self, report_data):
+        expression = r'.*:(?P<line>\d+)[ \t]+(?P<message>.*)'
+        lines = re.finditer(expression, report_data)
+
+        for line in lines:
+            args = {
+                'line_start':   line.group('line'),
+                'line_end':     line.group('line'),
+                'column_start': None,
+                'column_end':   None,
+                'message':      line.group('message'),
+                'severity':     None,
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
 if __name__ == "__main__":
-    content = open('/home/www/checker.codestyle.dev.webpp.ru/docs/codestyle/examples/phpcs.php', 'r').read()
+    content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
     checker = CheckPhp()
     checker.check(content)
     print len(checker.errors_list)
+    # print checker.errors_list[0].__dict__
 
     # c = "echo \"{0}\" >  e.php".format(content)
 
