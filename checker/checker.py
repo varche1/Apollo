@@ -70,16 +70,7 @@ class CheckError():
 class BaseLinter(object):
     __metaclass__ = abc.ABCMeta
 
-    def lint(self, content):
-        with open(self.temp_file, "w") as f:
-            f.write(content)
-
-        result = self._lint()
-        os.remove(self.temp_file)
-
-        return result
-
-    def _shell_out(self, cmd):
+    def shell_out(self, cmd):
         data = None
         info = None
         home = expanduser("~")
@@ -88,47 +79,62 @@ class BaseLinter(object):
 
         if proc.stdout:
             data = proc.communicate()[0]
-            self._parse_report(data)
+            self.parse_report(data)
 
         return data
 
     @abc.abstractmethod
-    def _lint(self):
-        """Метод реализующий получение ответа от низкоуровнего проверяльщика"""
+    def lint(self, temp_file_path):
+        """Метод реализующий проверку кода нужного файла на диске"""
         return
 
     @abc.abstractmethod
-    def _parse_report(self, report_data):
+    def parse_report(self, report_data):
         """Метод реализующий парсинг ответа от низкоуровнего проверяльщика"""
         return
 
 
-class CheckPhp():
-    def __init__(self):
-        self.errors_list = []
+class BaseChecker(object):
+    __metaclass__ = abc.ABCMeta
 
     def check(self, content):
-        """
-        """
-        self.errors_list += PhpCodeSniffer().lint(content)
-        self.errors_list += PhpMessDetector().lint(content)
+        temp_file_name = "tmp.{ext}".format(ext=self.file_extension)
+        temp_file_path = os.path.abspath(os.path.join(os.getcwd(), temp_file_name))
+
+        with open(temp_file_path, "w") as f:
+            f.write(content)
+
+        for linter in self.linters:
+            self.errors_list += linter.lint(temp_file_path)
+
+        os.remove(temp_file_path)
+
+
+class CheckPhp(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'php'
+
+        self.errors_list = []
+
+        self.linters = [
+            PhpCodeSniffer(),
+            PhpMessDetector()
+        ]
 
 
 class PhpCodeSniffer(BaseLinter):
     def __init__(self):
-        self.file_extension = 'php'
-        self.temp_file = os.path.abspath(os.path.join(os.getcwd(), "temp_file_to_check.{ext}".format(ext=self.file_extension)))
         self.errors_list = []
 
-    def _lint(self):
+    def lint(self, temp_file_path):
         """
         """
         # формирование аргументов вызова
 
-        self._shell_out(['phpcs', '--report=checkstyle', self.temp_file])
+        self.shell_out(['phpcs', '--report=checkstyle', temp_file_path])
         return self.errors_list
 
-    def _parse_report(self, report_data):
+    def parse_report(self, report_data):
         expression = r'.*line="(?P<line>\d+)" column="(?P<column>\d+)" severity="(?P<severity>\w+)" message="(?P<message>.*)" source="(?P<type>.*)"'
         lines = re.finditer(expression, report_data)
 
@@ -149,19 +155,17 @@ class PhpCodeSniffer(BaseLinter):
 
 class PhpMessDetector(BaseLinter):
     def __init__(self):
-        self.file_extension = 'php'
-        self.temp_file = os.path.abspath(os.path.join(os.getcwd(), "temp_file_to_check.{ext}".format(ext=self.file_extension)))
         self.errors_list = []
 
-    def _lint(self):
+    def lint(self, temp_file_path):
         """
         """
         # формирование аргументов вызова
 
-        self._shell_out(['phpmd', self.temp_file, 'text', 'codesize,unusedcode,naming'])
+        self.shell_out(['phpmd', temp_file_path, 'text', 'codesize,unusedcode,naming'])
         return self.errors_list
 
-    def _parse_report(self, report_data):
+    def parse_report(self, report_data):
         expression = r'.*:(?P<line>\d+)[ \t]+(?P<message>.*)'
         lines = re.finditer(expression, report_data)
 
