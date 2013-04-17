@@ -80,7 +80,14 @@ class BaseLinter(object):
         info = None
         home = expanduser("~")
 
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, startupinfo=info, cwd=home)
+        proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            startupinfo=info,
+            cwd=home
+        )
 
         if proc.stdout:
             data = proc.communicate()[0]
@@ -292,6 +299,51 @@ class CssLint(BaseLinter):
             self.errors_list.append(error)
 
 
+class CheckHtml(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'html'
+
+        self.errors_list = []
+
+        self.linters = [
+            HtmlTidy(),
+        ]
+
+
+class HtmlTidy(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path):
+        """
+        """
+        # формирование аргументов вызова
+
+        self.shell_out(['tidy', '-eq', temp_file_path])
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        expression = r'^line\s(?P<line>\d+)\scolumn\s(?P<column>\d)+\s-\s(?P<severity>Warning|Error):\s(?P<message>.+)'
+
+        for row in report_data.splitlines():
+            line = re.match(expression, row)
+
+            if line:
+                severity = 'error' if line.group('severity') == 'Error' else 'warning'
+                args = {
+                    'line_start':   line.group('line'),
+                    'line_end':     line.group('line'),
+                    'column_start': line.group('column'),
+                    'column_end':   line.group('column'),
+                    'message':      line.group('message'),
+                    'severity':     severity,
+                    'type':         None
+                }
+
+                error = CheckError(**args)
+                self.errors_list.append(error)
+
+
 if __name__ == "__main__":
     # content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
     # checker = CheckPhp()
@@ -305,8 +357,15 @@ if __name__ == "__main__":
     # print len(checker.errors_list)
     # print checker.errors_list[1].__dict__
 
-    content = open('/home/ivan/projects/codestyle/examples/csslint.css', 'r').read()
-    checker = CheckCss()
+    # content = open('/home/ivan/projects/codestyle/examples/csslint.css', 'r').read()
+    # checker = CheckCss()
+    # checker.check(content)
+    # print len(checker.errors_list)
+    # print checker.errors_list[1].__dict__
+    # print checker.errors_list[-1].__dict__
+
+    content = open('/home/ivan/projects/codestyle/examples/tidy.html', 'r').read()
+    checker = CheckHtml()
     checker.check(content)
     print len(checker.errors_list)
     print checker.errors_list[1].__dict__
