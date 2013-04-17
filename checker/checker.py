@@ -2,8 +2,9 @@
 
 import os
 import re
+import json
 import subprocess
-# from functools import wraps
+from uuid import uuid4
 try:
     from HTMLParser import HTMLParser
 except:
@@ -24,33 +25,37 @@ class CheckError():
         self.severity = None
         self.type = None
 
+        self.severities_available = ['error', 'warning']
+
         # Линия начала ошибки
-        if 'line_start' in kwargs.keys():
-            self.line_start = kwargs['line_start']
+        self.line_start = kwargs.get('line_start', None)
 
         # Линия конца ошибки
-        if 'line_end' in kwargs.keys():
-            self.line_end = kwargs['line_end']
+        self.line_end = kwargs.get('line_end', None)
 
         # Колонка начала ошибки
-        if 'column_start' in kwargs.keys():
-            self.column_start = kwargs['column_start']
+        self.column_start = kwargs.get('column_start', None)
 
         # Колонка конца ошибки
-        if 'column_end' in kwargs.keys():
-            self.column_end = kwargs['column_end']
-
-        # Сообщение ошибки
-        if 'severity' in kwargs.keys():
-            self.severity = kwargs['severity']
+        self.column_end = kwargs.get('column_end', None)
 
         # Суровость ошибки
-        if 'message' in kwargs.keys():
-            self.message = kwargs['message']
+        self.severity = kwargs.get('severity', self.severities_available[0])
+
+        if not self.severity:
+            self.severity = self.severities_available[0]
+
+        if self.severity not in self.severities_available:
+            exeption = "Wrong error severity: {severity}. Available types are: {types}".format(
+                severity=self.type,
+                types=self.severities_available)
+            raise Exception(exeption)
+
+        # Сообщение ошибки
+        self.message = kwargs.get('message', None)
 
         # Тип ошибки
-        if 'type' in kwargs.keys():
-            self.type = kwargs['type']
+        self.type = kwargs.get('type', None)
 
     def get_line(self):
         return self.line
@@ -98,16 +103,17 @@ class BaseChecker(object):
     __metaclass__ = abc.ABCMeta
 
     def check(self, content):
-        temp_file_name = "tmp.{ext}".format(ext=self.file_extension)
+        temp_file_name = "tmp-{random}.{ext}".format(ext=self.file_extension, random=str(uuid4()))
         temp_file_path = os.path.abspath(os.path.join(os.getcwd(), temp_file_name))
 
-        with open(temp_file_path, "w") as f:
-            f.write(content)
+        try:
+            with open(temp_file_path, "w") as f:
+                f.write(content)
 
-        for linter in self.linters:
-            self.errors_list += linter.lint(temp_file_path)
-
-        os.remove(temp_file_path)
+            for linter in self.linters:
+                self.errors_list += linter.lint(temp_file_path)
+        finally:
+            os.remove(temp_file_path)
 
 
 class CheckPhp(BaseChecker):
@@ -184,26 +190,74 @@ class PhpMessDetector(BaseLinter):
             self.errors_list.append(error)
 
 
+class CheckJavaScript(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'js'
+
+        self.errors_list = []
+
+        self.linters = [
+            JsHint(),
+        ]
+
+
+class JsHint(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path):
+        """
+        """
+        # формирование аргументов вызова
+
+        self.shell_out([
+            'jshint',
+            temp_file_path,
+            '--config',
+            '/home/ivan/projects/codestyle/checker/jshint.conf',
+            '--reporter',
+            '/home/ivan/projects/codestyle/checker/jshint_reporter.js']
+        )
+
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        # данные уже приходят в JSON формате
+        errors = json.loads(report_data)
+
+        for error_info in errors:
+            error = error_info.get('error', None)
+
+            error_type = 'error' if error.get('id', None) == '(error)' else 'warning'
+
+            if error.get('evidence', None):
+                error_column_end = len(error.get('evidence', None)) - error.get('character', None)
+            else:
+                error_column_end = error.get('character', None)
+
+            args = {
+                'line_start':   error.get('line', None),
+                'line_end':     error.get('line', None),
+                'column_start': error.get('character', None),
+                'column_end':   error_column_end,
+                'message':      error.get('reason', None),
+                'severity':     error_type,
+                'type':         error.get('code', None)
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
 if __name__ == "__main__":
     content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
     checker = CheckPhp()
     checker.check(content)
     print len(checker.errors_list)
-    # print checker.errors_list[0].__dict__
+    print checker.errors_list[1].__dict__
 
-    # c = "echo \"{0}\" >  e.php".format(content)
-
-    # c = "echo \"hello\" >  e.php"
-
-    # print c
-
-    # p = subprocess.Popen([c], stdout=subprocess.PIPE)
-
-    # if p.stdout:
-    #     data = p.communicate()[0]
-    #     print data
-
-    # content = open('/home/www/checker.codestyle.dev.webpp.ru/docs/codestyle/examples/phpcs.php', 'r').read()
-    # checker = CheckPhp()
-    # checker.check(content)
-    # print len(checker.errors_list)
+    content = open('/home/ivan/projects/codestyle/examples/javascript.js', 'r').read()
+    checker = CheckJavaScript()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[1].__dict__
