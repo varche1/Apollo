@@ -25,7 +25,7 @@ class CheckError():
         self.severity = None
         self.type = None
 
-        self.severities_available = ['error', 'warning']
+        severities_available = ['error', 'warning']
 
         # Линия начала ошибки
         self.line_start = kwargs.get('line_start', None)
@@ -40,15 +40,15 @@ class CheckError():
         self.column_end = kwargs.get('column_end', None)
 
         # Суровость ошибки
-        self.severity = kwargs.get('severity', self.severities_available[0])
+        self.severity = kwargs.get('severity', severities_available[0])
 
         if not self.severity:
-            self.severity = self.severities_available[0]
+            self.severity = severities_available[0]
 
-        if self.severity not in self.severities_available:
+        if self.severity not in severities_available:
             exeption = "Wrong error severity: {severity}. Available types are: {types}".format(
                 severity=self.type,
-                types=self.severities_available)
+                types=severities_available)
             raise Exception(exeption)
 
         # Сообщение ошибки
@@ -249,15 +249,65 @@ class JsHint(BaseLinter):
             self.errors_list.append(error)
 
 
-if __name__ == "__main__":
-    content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
-    checker = CheckPhp()
-    checker.check(content)
-    print len(checker.errors_list)
-    print checker.errors_list[1].__dict__
+class CheckCss(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'css'
 
-    content = open('/home/ivan/projects/codestyle/examples/javascript.js', 'r').read()
-    checker = CheckJavaScript()
+        self.errors_list = []
+
+        self.linters = [
+            CssLint(),
+        ]
+
+
+class CssLint(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path):
+        """
+        """
+        # формирование аргументов вызова
+
+        self.shell_out(['csslint', '--format=compact', temp_file_path])
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        expression = r'.*:\s(line\s(?P<line>\d)+\,\scol\s(?P<column>\d)+\,\s)?(?P<severity>Warning|Error)\s\-\s(?P<message>.*)'
+        lines = re.finditer(expression, report_data)
+
+        for line in lines:
+            severity = 'error' if line.group('severity') == 'Error' else 'warning'
+            args = {
+                'line_start':   line.group('line'),
+                'line_end':     line.group('line'),
+                'column_start': line.group('column'),
+                'column_end':   line.group('column'),
+                'message':      line.group('message'),
+                'severity':     severity,
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
+if __name__ == "__main__":
+    # content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
+    # checker = CheckPhp()
+    # checker.check(content)
+    # print len(checker.errors_list)
+    # print checker.errors_list[1].__dict__
+
+    # content = open('/home/ivan/projects/codestyle/examples/javascript.js', 'r').read()
+    # checker = CheckJavaScript()
+    # checker.check(content)
+    # print len(checker.errors_list)
+    # print checker.errors_list[1].__dict__
+
+    content = open('/home/ivan/projects/codestyle/examples/csslint.css', 'r').read()
+    checker = CheckCss()
     checker.check(content)
     print len(checker.errors_list)
     print checker.errors_list[1].__dict__
+    print checker.errors_list[-1].__dict__

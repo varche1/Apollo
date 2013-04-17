@@ -1,0 +1,300 @@
+/* ----------------- import css ----------------- */
+@import "content.css";
+/* ----------------- reset ----------------- */
+html, body {
+  margin:0;
+  padding:0;
+  font-size:100%;
+  -webkit-text-size-adjust:100%;
+  -ms-text-size-adjust:100%;
+  font-family:arial, "Helvetica CY", "Nimbus Sans L", sans-serif;
+  line-height:1.4;
+}
+h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,acronym,address,cite,code,del,dfn,img,q,
+s,samp,small,strike,sub,sup,tt,var,fieldset,form,label,legend,button,
+table,caption,tbody,tfoot,thead,tr,th,td {
+  margin:0;
+  padding:0;
+  border:0;
+  line-height:1.4;
+  font-size:100%;
+  font-weight:normal;
+  font-style:normal;
+}
+
+header .city .blazon.bz-1 {
+  background-position:0 0;
+}
+header .city .blazon.bz-2 {
+  background-position:0 -40px;
+}
+header .city .blazon.bz-3 {
+  background-position:0 -76px;
+}
+header .city .blazon.bz-4 {
+  background-position:0 -110px;
+}
+header .city .blazon.bz-5 {
+  background-position:0 -145px;
+}
+header .city .dot {
+  background:url(../img/dot-black.gif) 0 100% repeat-x;
+  vertical-align:middle;
+}
+header .citys {
+  position:absolute;
+  left:-11px;
+  top:-7px;
+  z-index:2;
+  width:185px;
+  background:#fff;
+  border:2px solid #69a24c;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  -moz-box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  -webkit-box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  display:none;
+}
+header a.close-citys {
+  width:11px;
+  height:11px;
+  display:block;
+  position:absolute;
+  top:13px;
+  left:165px;
+  z-index:5;
+  background:url(../img/popup-close.png) no-repeat;
+}
+header .current-city {
+  height:38px;
+}
+header .citys .citys-items {
+  border-top:1px solid #dedede;
+  border-left:1px solid #fff;
+  border-right:1px solid #fff;
+  background:#f7f7f7;
+  -moz-border-radius:0 0 3px 3px;
+  -webkit-border-radius:0 0 3px 3px;
+  border-radius:0 0 3px 3px;
+  padding-bottom:3px;
+}
+header a.choice-city {
+  display:block;
+  padding:8px 9px 6px;
+  color:#000;
+  margin:0 -1px 0;
+  text-decoration:none;
+  font-size:11px;
+  line-height:16px;
+  -webkit-transition:0.2s;
+  -moz-transition:0.2s;
+  -o-transition:0.2s;
+  transition:0.2s;
+  -webkit-transition-property:background-color;
+  -moz-transition-property:background-color;
+  -o-transition-property:background-color;
+  transition-property:background-color;
+}
+header a.choice-city:hover {
+  background:#9ece23;
+  border-color:#9ece23;
+  color:#fff;
+}
+header a.choice-city:hover .dot {
+  background-image:url(../img/dot-white.gif);
+}
+header a.choice-city:hover .blazon-bg {
+  background-position:0 0;
+}
+header .current-city.small {
+  display:block;
+  padding-left:35px;
+  padding-top:10px;
+  color:#000;
+  font-size:11px;
+  line-height:16px;
+  height:28px;
+}
+header .contact {
+  width:290px;
+  position:absolute;
+  top:68px;
+  left:406px;
+  z-index:4;
+}
+header .phone {
+  position:relative;
+  z-index:3;
+  width:230px;
+}
+header .main-phone-type {
+  color:#8d8d8d;
+  font-size:12px;
+  display:block;
+}
+header .code {
+  display:inline-block;
+  background:#f2f2f2;
+  -moz-border-radius:3px;
+  -webkit-border-radius:3px;
+  border-radius:3px;
+  vertical-align:top;
+  color:#a1a1a1;
+  font-size:14px;
+  font-weight:bold;
+  padding:0 5px 0 7px;
+  height:18px;
+  margin:2px 8px 0 0;
+}
+header a.numb {
+  font-size:35px;
+  line-height:33px;
+  font-weight:bold;
+  vertical-align:top;
+  text-decoration:none;
+  color:#000;
+  padding-right:20px;
+  background:url(../img/arr-black-5.gif) 100% 50% no-repeat;
+  display:inline-block;
+}
+header a.numb .dot {
+  background:url(../img/dot-black.gif) 0 85% repeat-x;
+}
+header a.numb:hover .dot {
+  background:none;
+}
+header a.numb.open {
+  background:none;
+}
+header a.numb.open .dot {
+  background:none;
+}
+header .phones {
+  width:265px;
+  position:absolute;
+  left:-14px;
+  top:-8px;
+  z-index:2;
+  background:#fff;
+  border:2px solid #69a24c;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  border-radius:5px;
+  -moz-box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  -webkit-box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  box-shadow:0 3px 20px rgba(0,0,0,0.2);
+  display:none;
+}
+header a.close-phones {
+  width:11px;
+  height:11px;
+  display:block;
+  position:absolute;
+  top:13px;
+  right:9px;
+  z-index:5;
+  background:url(../img/popup-close.png) no-repeat;
+  z-index:5;
+}
+header .phones-top {
+  height:63px;
+}
+header .phone-items {
+  background:#f7f7f7;
+  border-left:1px solid #fff;
+  border-right:1px solid #fff;
+  border-top:1px solid #dedede;
+  border-radius:0 0 3px 3px;
+  -moz-border-radius:0 0 3px 3px;
+  -webkit-border-radius:0 0 3px 3px;
+  padding-bottom:15px;
+}
+header .phone-item {
+  padding:15px 30px 0 40px;
+  background:url(../img/phone-item.png) 11px 16px no-repeat;
+  position:relative;
+}
+header .phone-item .code {
+  background-color:#ecedec;
+}
+header .phone-item .count {
+  position:absolute;
+  font-size:11px;
+  width:12px;
+  height:12px;
+  left:13px;
+  top:22px;
+  text-align:center;
+  color:#c1bcbc;
+}
+header .type-phone {
+  display:block;
+  color:#8d8d8d;
+  font-size:11px;
+  line-height:13px;
+  margin-bottom:4px;
+}
+header .item-numb {
+  font-size:25px;
+  line-height:28px;
+  font-weight:bold;
+  color:#000;
+  vertical-align:top;
+}
+header .contact-popups {
+  padding-top:6px;
+  position:relative;
+  z-index:0;
+}
+header .contact-popups a {
+  font-size:12px;
+  text-decoration:none;
+  padding-left:25px;
+  margin-right:25px;
+  height:15px;
+  display:inline-block;
+}
+header .contact-popups a .dot {
+  background:url(../img/dot-green.gif) 0 100% repeat-x;
+}
+header .contact-popups a.call {
+  background:url(../img/call.png) no-repeat;
+}
+header .contact-popups a.feedback {
+  background:url(../img/feedback.png) no-repeat;
+}
+header .contact-popups a:hover {
+  background-position:0 100%;
+}
+header .contact-popups a:hover .dot {
+  background:none;
+}
+header .cabinet {
+  width:272px;
+  background:#f8f8f8 url(../img/cabinet.png) 3px 13px no-repeat;
+  border:1px solid #eee;
+  -moz-border-radius:6px;
+  -webkit-border-radius:6px;
+  border-radius:6p;
+  position:absolute;
+  left:713px;
+  top:74px;
+  min-height:43px;
+  padding:14px 0 13px;
+}
+header .cab-left {
+  position:absolute;
+  left:55px;
+  top:13px;
+  width:80px;
+}
+header .cab-name {
+  color:#5c5c5c;
+  font-size:14px;
+  line-height:16px;
+  font-weight:bold;
+  text-transform:uppercase;
+  margin-bottom:-5px;
+}
