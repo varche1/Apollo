@@ -13,6 +13,12 @@ from os.path import expanduser
 
 import abc
 
+import pep8
+
+import _ast
+
+import pyflakes.checker as pyflakes
+
 
 class CheckError():
     """Класс представления ошибки"""
@@ -96,14 +102,14 @@ class BaseLinter(object):
         return data
 
     @abc.abstractmethod
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """Метод реализующий проверку кода нужного файла на диске"""
-        return
+        pass
 
     @abc.abstractmethod
     def parse_report(self, report_data):
         """Метод реализующий парсинг ответа от низкоуровнего проверяльщика"""
-        return
+        pass
 
 
 class BaseChecker(object):
@@ -118,7 +124,7 @@ class BaseChecker(object):
                 f.write(content)
 
             for linter in self.linters:
-                self.errors_list += linter.lint(temp_file_path)
+                self.errors_list += linter.lint(temp_file_path, content)
         finally:
             os.remove(temp_file_path)
 
@@ -139,7 +145,7 @@ class PhpCodeSniffer(BaseLinter):
     def __init__(self):
         self.errors_list = []
 
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """
         """
         # формирование аргументов вызова
@@ -170,7 +176,7 @@ class PhpMessDetector(BaseLinter):
     def __init__(self):
         self.errors_list = []
 
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """
         """
         # формирование аргументов вызова
@@ -212,7 +218,7 @@ class JsHint(BaseLinter):
     def __init__(self):
         self.errors_list = []
 
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """
         """
         # формирование аргументов вызова
@@ -271,7 +277,7 @@ class CssLint(BaseLinter):
     def __init__(self):
         self.errors_list = []
 
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """
         """
         # формирование аргументов вызова
@@ -314,7 +320,7 @@ class HtmlTidy(BaseLinter):
     def __init__(self):
         self.errors_list = []
 
-    def lint(self, temp_file_path):
+    def lint(self, temp_file_path, code_source=None):
         """
         """
         # формирование аргументов вызова
@@ -344,29 +350,196 @@ class HtmlTidy(BaseLinter):
                 self.errors_list.append(error)
 
 
+class CheckPython(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'py'
+
+        self.errors_list = []
+
+        self.linters = [
+            Pep8(),
+            PyFlakes(),
+            PyLint()
+        ]
+
+
+class Pep8(BaseLinter):
+
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path, code_source=None):
+        """
+        """
+        _errors_list = []
+
+        class Pep8Report(pep8.BaseReport):
+            def error(self, line_number, offset, text, check):
+                error_type = text[:4]
+                severity = 'error' if error_type.startswith('E') else 'warning'
+
+                args = {
+                    'line_start':   line_number,
+                    'line_end':     line_number,
+                    'column_start': offset,
+                    'column_end':   offset,
+                    'message':      text[5:],
+                    'severity':     severity,
+                    'type':         error_type
+                }
+
+                error = CheckError(**args)
+                _errors_list.append(error)
+
+                return error_type
+
+        ignore = pep8.DEFAULT_IGNORE.split(',')
+
+        options = pep8.StyleGuide(reporter=Pep8Report, ignore=ignore).options
+        options.max_line_length = pep8.MAX_LINE_LENGTH
+
+        pep8.Checker(filename=temp_file_path, lines=None, options=options).check_all()
+
+        self.errors_list = _errors_list
+
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        pass
+
+
+class PyFlakes(BaseLinter):
+
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path, code_source=None):
+        """
+        """
+        try:
+            tree = compile(code_source, temp_file_path, "exec", _ast.PyCF_ONLY_AST)
+        except (SyntaxError, IndentationError), value:
+            wrong_code = value.text.splitlines()[-1]
+
+            args = {
+                'line_start':   value.lineno,
+                'line_end':     value.lineno,
+                'column_start': value.offset,
+                'column_end':   len(wrong_code) - value.offset,
+                'message':      value.args[0],
+                'severity':     'error',
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+        except ValueError, e:
+            args = {
+                'line_start':   None,
+                'line_end':     None,
+                'column_start': None,
+                'column_end':   None,
+                'message':      e.args[0],
+                'severity':     'error',
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+        else:
+            reports = pyflakes.Checker(tree, temp_file_path)
+
+            for report in reports.messages:
+                args = {
+                    'line_start':   report.lineno,
+                    'line_end':     report.lineno,
+                    'column_start': None,
+                    'column_end':   None,
+                    'message':      report.message % report.message_args,
+                    'severity':     'error',
+                    'type':         None
+                }
+
+                error = CheckError(**args)
+                self.errors_list.append(error)
+        finally:
+            return self.errors_list
+
+    def parse_report(self, report_data):
+        pass
+
+
+class PyLint(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path, code_source=None):
+        """
+        """
+        # формирование аргументов вызова
+        ignored_list = ['F0401']
+        ignored = ','.join([str(i) for i in ignored_list])
+
+        self.shell_out([
+            'pylint',
+            '--reports=n',
+            '--output-format=parseable',
+            '--symbols=y',
+            "--disable={0}".format(ignored),
+            temp_file_path])
+
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        expression = r'.*\:(?P<line>\d)+\:\s\[(?P<type>.)+\,?.*\]\s(?P<message>.)*'
+        lines = re.finditer(expression, report_data)
+
+        for line in lines:
+            severity = 'error' if line.group('type').startswith('E') else 'warning'
+            args = {
+                'line_start':   line.group('line'),
+                'line_end':     line.group('line'),
+                'column_start': None,
+                'column_end':   None,
+                'message':      line.group('message'),
+                'severity':     severity,
+                'type':         line.group('type')
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
 if __name__ == "__main__":
-    # content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
-    # checker = CheckPhp()
-    # checker.check(content)
-    # print len(checker.errors_list)
-    # print checker.errors_list[1].__dict__
+    content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
+    checker = CheckPhp()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[1].__dict__
 
-    # content = open('/home/ivan/projects/codestyle/examples/javascript.js', 'r').read()
-    # checker = CheckJavaScript()
-    # checker.check(content)
-    # print len(checker.errors_list)
-    # print checker.errors_list[1].__dict__
+    content = open('/home/ivan/projects/codestyle/examples/javascript.js', 'r').read()
+    checker = CheckJavaScript()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[1].__dict__
 
-    # content = open('/home/ivan/projects/codestyle/examples/csslint.css', 'r').read()
-    # checker = CheckCss()
-    # checker.check(content)
-    # print len(checker.errors_list)
-    # print checker.errors_list[1].__dict__
-    # print checker.errors_list[-1].__dict__
+    content = open('/home/ivan/projects/codestyle/examples/csslint.css', 'r').read()
+    checker = CheckCss()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[1].__dict__
+    print checker.errors_list[-1].__dict__
 
     content = open('/home/ivan/projects/codestyle/examples/tidy.html', 'r').read()
     checker = CheckHtml()
     checker.check(content)
     print len(checker.errors_list)
     print checker.errors_list[1].__dict__
+    print checker.errors_list[-1].__dict__
+
+    content = open('/home/ivan/projects/codestyle/examples/python.py', 'r').read()
+    checker = CheckPython()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[0].__dict__
     print checker.errors_list[-1].__dict__
