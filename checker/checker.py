@@ -270,6 +270,7 @@ class CheckCss(BaseChecker):
 
         self.linters = [
             CssLint(),
+            Recess()
         ]
 
 
@@ -510,6 +511,81 @@ class PyLint(BaseLinter):
             self.errors_list.append(error)
 
 
+class CheckLess(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'less'
+
+        self.errors_list = []
+
+        self.linters = [
+            LessJs(),
+            Recess()
+        ]
+
+
+class Recess(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path, code_source=None):
+        """
+        """
+        # формирование аргументов вызова
+
+        self.shell_out(['recess', '--strictPropertyOrder=false', temp_file_path])
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        expression = r'\[36m(?P<message>.*)\x1b\[39m\s+.*\[90m\s+(?P<line>\d+)'
+        lines = re.finditer(expression, report_data)
+
+        for line in lines:
+            args = {
+                'line_start':   line.group('line'),
+                'line_end':     line.group('line'),
+                'column_start': None,
+                'column_end':   None,
+                'message':      line.group('message'),
+                'severity':     'error',
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
+class LessJs(BaseLinter):
+    def __init__(self):
+        self.errors_list = []
+
+    def lint(self, temp_file_path, code_source=None):
+        """
+        """
+        # формирование аргументов вызова
+
+        self.shell_out(['lessc', '--no-color', temp_file_path])
+        return self.errors_list
+
+    def parse_report(self, report_data):
+        expression = r'(?P<severity>.+)\:\s(?P<message>.+)\sin.*\:(?P<line>\d+)\:(?P<column>\d*)'
+        lines = re.finditer(expression, report_data)
+
+        for line in lines:
+            severity = 'error' if line.group('severity') == 'ParseError' else 'warning'
+            args = {
+                'line_start':   line.group('line'),
+                'line_end':     line.group('line'),
+                'column_start': line.group('column'),
+                'column_end':   line.group('column'),
+                'message':      line.group('message'),
+                'severity':     severity,
+                'type':         None
+            }
+
+            error = CheckError(**args)
+            self.errors_list.append(error)
+
+
 if __name__ == "__main__":
     content = open('/home/ivan/projects/codestyle/examples/phpcs.php', 'r').read()
     checker = CheckPhp()
@@ -539,6 +615,13 @@ if __name__ == "__main__":
 
     content = open('/home/ivan/projects/codestyle/examples/python.py', 'r').read()
     checker = CheckPython()
+    checker.check(content)
+    print len(checker.errors_list)
+    print checker.errors_list[0].__dict__
+    print checker.errors_list[-1].__dict__
+
+    content = open('/home/ivan/projects/codestyle/examples/less/style.less', 'r').read()
+    checker = CheckLess()
     checker.check(content)
     print len(checker.errors_list)
     print checker.errors_list[0].__dict__

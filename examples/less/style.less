@@ -1,0 +1,128 @@
+@charset "utf-8";
+@import "fonts.css";
+
+@scrWidth: 1280px;
+@scrHeight: 1024px;
+@contWidth: (@scrWidth -50px);
+@contHeight: (@scrHeight -50px);
+
+
+//===========================================================
+.verticalGradient(@upper,@bottom)
+ {
+  background: @upper; /* Old browsers */
+  background: -moz-linear-gradient(top, @upper 0%, @bottom 99%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@upper), color-stop(99%,@bottom)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, @upper 0%,@bottom 99%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, @upper 0%,@bottom 99%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, @upper 0%,@bottom 99%); /* IE10+ */
+  background: linear-gradient(to bottom, @upper 0%,@bottom 99%); /* W3C */
+}
+
+.btn-gradient(@upper,@middle,@bottom) {
+  background: -moz-linear-gradient(top,@upper 0%, @middle 16%, @middle 24%, @bottom 51%, @bottom 99%); // FF3.6+ 
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@upper), color-stop(16%,@middle), color-stop(24%,@middle), color-stop(51%,@bottom), color-stop(99%,@bottom)); // Chrome,Safari4+ 
+  background: -webkit-linear-gradient(top,@upper 0%,@middle 16%,@middle 24%,@bottom 51%,@bottom 99%); // Chrome10+,Safari5.1+ 
+  background: -o-linear-gradient(top,@upper 0%,@middle 16%,@middle 24%,@bottom 51%,@bottom 99%); // Opera 11.10+ 
+  background: -ms-linear-gradient(top,@upper 0%,@middle 16%,@middle 24%,@bottom 51%,@bottom 99%); // IE10+ 
+  background: linear-gradient(to bottom,@upper 0%,@middle 16%,@middle 24%,@bottom 51%,@bottom 99%); // W3C 
+}
+
+//цвета бордеров
+.btn-borders(@upper,@side,@bottom) {
+  border: 1px solid;
+  border-color: @upper @side @bottom;
+}
+
+//стиль поля ввода
+.txt-input-style() {
+  border: 1px solid;
+  border-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.05);
+
+  -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(255, 255, 255, 0.5);
+  -moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+//три тени кнопки
+.btn-shadows(@inTop,@inBot,@outBot)
+ {
+  -webkit-box-shadow: inset 0px 2px 2px -1px @inTop,
+                      inset 0px -2px 2px -1px @inBot,
+                      0px 10px 20px -10px @outBot;
+
+  box-shadow: inset 0px 2px 2px -1px @inTop,
+              inset 0px -2px 2px -1px @inBot,
+              0px 10px 20px -10px @outBot;
+}
+
+.rounded-block(@radius)
+ {
+  -webkit-border-radius: @radius;
+  -moz-border-radius: @radius;
+  border-radius: @radius;
+}
+
+//назначает свойства текста кнопки
+.btn-text()
+ {
+  text-transform: uppercase;
+}
+
+//назначает цвет текста кнопки
+.btn-color(@toneColor,@darkColor)
+ {
+  color: @darkColor;
+  text-shadow: 0px 1px 0px @toneColor;
+}
+
+.boxsizing(@type: border-box) {
+  -webkit-box-sizing: @type;
+  -moz-box-sizing: @type;
+  box-sizing: @type;
+}
+
+.vreverv_cdcver    {
+      color: red;
+}
+//===========================================
+
+html {
+  width: @scrWidth;
+  height: @scrHeight;
+    min-width: @scrWidth;
+    min-height: @scrHeight;
+  .boxsizing(border-box);
+  
+  background: url(/static/img/background.png);
+  font-family: "PFDinTextCondPro", sans-serif;
+  
+}
+
+#vrever {
+    color: #333;
+}
+
+
+body { 
+  position: relative;
+  width: @scrWidth;
+  height: @scrHeight;
+  margin: 0;
+  padding: 25px;
+  .boxsizing(border-box);
+  
+  .verticalGradient(#eceae1,#faf9f4);
+
+  //контентная часть
+  .layout {
+    display: block;
+    width: @contWidth; //TODO: change sizes
+    height: @contHeight;
+    padding: 158px 0 200px;
+    .boxsizing(border-box);
+    
+    .verticalGradient(#e2dfd7,#efeee9);
+  }
+}
