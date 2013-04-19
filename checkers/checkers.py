@@ -1,0 +1,104 @@
+# -*- encoding: utf-8 -*-
+
+import os
+import abc
+from uuid import uuid4
+
+from linters import PhpCodeSniffer
+from linters import PhpMessDetector
+from linters import JsHint
+from linters import CssLint
+from linters import Recess
+from linters import HtmlTidy
+from linters import Pep8
+from linters import PyFlakes
+from linters import PyLint
+from linters import Less
+
+
+class BaseChecker(object):
+    __metaclass__ = abc.ABCMeta
+
+    def check(self, content):
+        temp_file_name = "tmp-{random}.{ext}".format(ext=self.file_extension, random=str(uuid4()))
+        temp_file_path = os.path.abspath(os.path.join(os.getcwd(), temp_file_name))
+
+        try:
+            with open(temp_file_path, "w") as f:
+                f.write(content)
+
+            for linter in self.linters:
+                self.errors_list += linter.lint(temp_file_path, content)
+        finally:
+            os.remove(temp_file_path)
+
+
+class CheckPhp(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'php'
+
+        self.errors_list = []
+
+        self.linters = [
+            PhpCodeSniffer(),
+            PhpMessDetector()
+        ]
+
+
+class CheckJavaScript(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'js'
+
+        self.errors_list = []
+
+        self.linters = [
+            JsHint(),
+        ]
+
+
+class CheckCss(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'css'
+
+        self.errors_list = []
+
+        self.linters = [
+            CssLint(),
+            Recess()
+        ]
+
+
+class CheckHtml(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'html'
+
+        self.errors_list = []
+
+        self.linters = [
+            HtmlTidy(),
+        ]
+
+
+class CheckPython(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'py'
+
+        self.errors_list = []
+
+        self.linters = [
+            Pep8(),
+            PyFlakes(),
+            PyLint()
+        ]
+
+
+class CheckLess(BaseChecker):
+    def __init__(self):
+        self.file_extension = 'less'
+
+        self.errors_list = []
+
+        self.linters = [
+            Less(),
+            Recess()
+        ]
