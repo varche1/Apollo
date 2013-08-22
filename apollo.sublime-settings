@@ -1,0 +1,9 @@
+{
+    // Plugin settings
+
+    // Turn the debug output on/off
+    "debug": true,
+
+    // URL for plugin backend
+    "backend_url": "",
+}
