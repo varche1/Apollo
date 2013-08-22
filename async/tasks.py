@@ -14,7 +14,8 @@ sys.path.append(projects_dir)
 from checkers_codestylelinter.checkers import CheckPhp, CheckJavaScript, CheckCss, CheckHtml, CheckPython, CheckLess
 
 @celery.task
-def check_code(request):
+def check_code(language, source):
+	# return "--YYEEAAR--"
 	checker = {
 	    'python': CheckPython,
 	    'php': CheckPhp,
@@ -22,7 +23,14 @@ def check_code(request):
 	    'css': CheckCss,
 	    'less': CheckLess,
 	    'html': CheckHtml,
-	}.get(request['language'])
+	}.get(language)
+
+	# print(language)
+	# print(source.encode('utf-8'))
 
 	checker_object = checker()
-	return checker_object.check(request['source'].encode('utf-8'))
+	result = checker_object.check(source.encode('utf-8'))
+
+	print(result)
+
+	return result

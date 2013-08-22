@@ -1,46 +1,41 @@
 # -*- encoding: utf-8 -*-
 
-import websocket
-import thread
-import json
-
 import sys
 import os.path
+import urllib
+import urllib2
+import base64
 
-def on_message(ws, message):
-    print message
+def get_data(language, file_name):
+    content = open(os.path.join(example_dir, file_name), 'r').read()
+    data = {
+        'language': language,
+        'source': base64.b64encode(content)
+    }
 
-def on_error(ws, error):
-    print error
+    return data
 
-def on_close(ws):
-    print "### closed ###"
-
-def on_open(ws):
-    def run(language, file_name):
-        content = open(os.path.join(example_dir, file_name), 'r').read()
-        message = {
-            'language': language,
-            'source': content
-        }
-        ws.send(json.dumps(message))
-
-    thread.start_new_thread(run, ('php', 'phpcs.php'))
-    thread.start_new_thread(run, ('javascript', 'javascript.js'))
-    thread.start_new_thread(run, ('css', 'csslint.css'))
-    thread.start_new_thread(run, ('html', 'tidy.html'))
-    thread.start_new_thread(run, ('python', 'python.py'))
-    thread.start_new_thread(run, ('less', 'less/style.less'))
+def make_request(values, url):
+    headers = {'User-Agent' : 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)'}
+    data = urllib.urlencode(values)
+    req = urllib2.Request(url, data, headers)
+    response = urllib2.urlopen(req)
+    return response.read()
 
 
 if __name__ == "__main__":
     projects_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     example_dir = os.path.join(projects_dir, 'checkers_codestylelinter', 'example_code')
 
-    ws = websocket.WebSocketApp("ws://localhost:8888/ws",
-                                on_message = on_message,
-                                on_error = on_error,
-                                on_close = on_close)
-    ws.on_open = on_open
+    to_check = [
+        ('php', 'phpcs.php'),
+        ('javascript', 'javascript.js'),
+        ('css', 'csslint.css'),
+        ('html', 'tidy.html'),
+        ('python', 'python.py'),
+        ('less', 'less/style.less')
+    ]
 
-    ws.run_forever()
+    for item in to_check:
+        values = get_data(item[0], item[1])
+        print(make_request(values, "http://do.fiveb.pw:8888/check_code"))

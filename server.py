@@ -5,32 +5,30 @@ from __future__ import absolute_import
 import sys
 import os.path
 import json
+import base64
 
 import tornado.ioloop
-import tornado.websocket
 import tornado.web
+import tornado.gen
+import tcelery
 
 from async.tasks import check_code
 
-class EchoWebSocket(tornado.websocket.WebSocketHandler):
-    def open(self):
-        print("WebSocket opened")
+tcelery.setup_nonblocking_producer()
 
-    def on_message(self, message):
-        request = json.loads(message)
+class CheckCodeHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.coroutine
+    def post(self):
+        language = self.get_argument('language', None)
+        source = base64.b64decode(self.get_argument('source', ""))
 
-        result = check_code.delay(request)
-
-        print(result)
-
-        # self.write_message(checker_object.errors_list[1].__dict__)
-        self.write_message(result.get())
-
-    def on_close(self):
-        print("WebSocket closed")
+        response = yield tornado.gen.Task(check_code.apply_async, args=[language, source])
+        self.write(str(response.result))
+        self.finish()
 
 application = tornado.web.Application([
-    (r"/ws", EchoWebSocket)
+    (r"/check_code", CheckCodeHandler)
 ])
 
 if __name__ == "__main__":
