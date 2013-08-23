@@ -21,10 +21,10 @@ class CheckCodeHandler(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def post(self):
         language = self.get_argument('language', None)
-        source = base64.b64decode(self.get_argument('source', ""))
+        source = base64.b64decode(self.get_argument('source', "")).decode('utf-8')
 
         response = yield tornado.gen.Task(check_code.apply_async, args=[language, source])
-        self.write(str(response.result))
+        self.write(response.result)
         self.finish()
 
 application = tornado.web.Application([

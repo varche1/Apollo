@@ -15,7 +15,6 @@ from checkers_codestylelinter.checkers import CheckPhp, CheckJavaScript, CheckCs
 
 @celery.task
 def check_code(language, source):
-	# return "--YYEEAAR--"
 	checker = {
 	    'python': CheckPython,
 	    'php': CheckPhp,
@@ -25,12 +24,7 @@ def check_code(language, source):
 	    'html': CheckHtml,
 	}.get(language)
 
-	# print(language)
-	# print(source.encode('utf-8'))
-
 	checker_object = checker()
-	result = checker_object.check(source.encode('utf-8'))
+	checker_object.check(source)
 
-	print(result)
-
-	return result
+	return checker_object.get_errors_json()

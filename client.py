@@ -5,6 +5,7 @@ import os.path
 import urllib
 import urllib2
 import base64
+import json
 
 def get_data(language, file_name):
     content = open(os.path.join(example_dir, file_name), 'r').read()
@@ -20,7 +21,7 @@ def make_request(values, url):
     data = urllib.urlencode(values)
     req = urllib2.Request(url, data, headers)
     response = urllib2.urlopen(req)
-    return response.read()
+    return json.loads(response.read())
 
 
 if __name__ == "__main__":
