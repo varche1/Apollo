@@ -3,6 +3,7 @@
 import os
 import abc
 from uuid import uuid4
+import json
 
 from linters import PhpCodeSniffer
 from linters import PhpMessDetector
@@ -25,12 +26,17 @@ class BaseChecker(object):
 
         try:
             with open(temp_file_path, "w") as f:
-                f.write(content)
+                f.write(content.encode("utf-8"))
 
             for linter in self.linters:
                 self.errors_list += linter.lint(temp_file_path, content)
         finally:
             os.remove(temp_file_path)
+
+    def get_errors_json(self):
+        errors_list = [error.get_error() for error in self.errors_list]
+        return json.dumps(errors_list)
+
 
 
 class CheckPhp(BaseChecker):

@@ -62,3 +62,26 @@ class CheckError():
             # ошибка декодирования в лог
 
         return HTMLParser().unescape(data)
+
+    def get_error(self):
+        return {
+            "line_start":   self.line_start,
+            "line_end": self.line_end,
+            "column_start": self.column_start,
+            "column_end":   self.column_end,
+            "message": self.message,
+            "severity": self.severity,
+            "type":   self.type
+        }
+
+    @staticmethod
+    def serialize(obj):
+        return {
+            "line_start":   obj.line_start,
+            "line_end": obj.line_end,
+            "column_start": obj.column_start,
+            "column_end":   obj.column_end,
+            "message": obj.message,
+            "severity": obj.severity,
+            "type":   obj.type
+        }
