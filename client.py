@@ -26,7 +26,7 @@ def make_request(values, url):
 
 if __name__ == "__main__":
     projects_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-    example_dir = os.path.join(projects_dir, 'checkers_codestylelinter', 'example_code')
+    example_dir = os.path.join(projects_dir, 'checkers', 'example_code')
 
     to_check = [
         ('php', 'phpcs.php'),

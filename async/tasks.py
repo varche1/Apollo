@@ -11,7 +11,7 @@ from async.celery import celery
 projects_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
 sys.path.append(projects_dir)
 
-from checkers_codestylelinter.checkers import CheckPhp, CheckJavaScript, CheckCss, CheckHtml, CheckPython, CheckLess
+from checkers.checkers import CheckPhp, CheckJavaScript, CheckCss, CheckHtml, CheckPython, CheckLess
 
 @celery.task
 def check_code(language, source):
