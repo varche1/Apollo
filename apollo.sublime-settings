@@ -5,5 +5,8 @@
     "debug": true,
 
     // URL for plugin backend
-    "backend_url": "",
+    "backend_url": "http://do.fiveb.pw:8888/check_code",
+
+    // Task manager check interval in microseconds
+    "manager_interval": 200,
 }
