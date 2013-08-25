@@ -2,11 +2,20 @@
     // Plugin settings
 
     // Turn the debug output on/off
-    "debug": true,
+    "apollo_debug": true,
 
     // URL for plugin backend
-    "backend_url": "http://do.fiveb.pw:8888/check_code",
+    "apollo_backend_url": "http://do.fiveb.pw:8888/check_code",
 
     // Task manager check interval in microseconds
-    "manager_interval": 200,
+    "apollo_manager_interval": 200,
+
+    // Run Apollo check after file save
+    "apollo_check_after_save": true,
+
+    // Outline errors in text
+    "apollo_outline_errors": true,
+
+    // Show marks
+    "apollo_show_marks": true,
 }
