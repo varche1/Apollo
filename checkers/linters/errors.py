@@ -20,19 +20,24 @@ class CheckError():
         severities_available = ['error', 'warning']
 
         # Линия начала ошибки
-        self.line_start = kwargs.get('line_start', None)
+        line_start = kwargs.get('line_start', None)
+        self.line_start = int(line_start) if line_start else None
 
         # Линия конца ошибки
-        self.line_end = kwargs.get('line_end', None)
+        line_end = kwargs.get('line_end', None)
+        self.line_end = int(line_end) if line_end else None
 
         # Колонка начала ошибки
-        self.column_start = kwargs.get('column_start', None)
+        column_start = kwargs.get('column_start', None)
+        self.column_start = int(column_start) if column_start else None
 
         # Колонка конца ошибки
-        self.column_end = kwargs.get('column_end', None)
+        column_end = kwargs.get('column_end', None)
+        self.column_end = int(column_end) if column_end else None
 
         # Суровость ошибки
-        self.severity = kwargs.get('severity', severities_available[0])
+        severity = kwargs.get('severity', severities_available[0])
+        self.severity = str(severity) if severity else None
 
         if not self.severity:
             self.severity = severities_available[0]
@@ -44,10 +49,12 @@ class CheckError():
             raise Exception(exeption)
 
         # Сообщение ошибки
-        self.message = kwargs.get('message', None)
+        message = kwargs.get('message', None)
+        self.message = str(message) if message else None
 
         # Тип ошибки
-        self.type = kwargs.get('type', None)
+        type_error = kwargs.get('type', None)
+        self.type = str(type_error) if type_error else None
 
     def get_line(self):
         return self.line
