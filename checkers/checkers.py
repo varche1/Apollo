@@ -36,8 +36,8 @@ class BaseChecker(object):
         finally:
             os.remove(temp_file_path)
 
-    def get_errors_json(self):
-        return self.errors.get_errors_json()
+    def get_errors(self):
+        return self.errors.get_errors()
 
 
 

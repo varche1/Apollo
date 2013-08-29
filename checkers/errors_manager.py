@@ -39,6 +39,3 @@ class ErrorsManager(list):
     def get_errors(self):
         sorted_errors = self.get_sorted()
         return [error.get_error() for error in sorted_errors]
-
-    def get_errors_json(self):
-        return json.dumps(self.get_errors())
