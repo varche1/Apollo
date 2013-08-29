@@ -34,7 +34,8 @@ if __name__ == "__main__":
         ('css', 'csslint.css'),
         ('html', 'tidy.html'),
         ('python', 'python.py'),
-        ('less', 'less/style.less')
+        ('less', 'less/style.less'),
+        ('hiphop', 'phpcs.php'),
     ]
 
     for item in to_check:
