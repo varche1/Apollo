@@ -5,6 +5,7 @@ import abc
 from uuid import uuid4
 import json
 
+from errors_manager import ErrorsManager
 from linters import PhpCodeSniffer
 from linters import PhpMessDetector
 from linters import JsHint
@@ -20,6 +21,8 @@ from linters import Less
 class BaseChecker(object):
     __metaclass__ = abc.ABCMeta
 
+    errors = ErrorsManager()
+
     def check(self, content):
         temp_file_name = "tmp-{random}.{ext}".format(ext=self.file_extension, random=str(uuid4()))
         temp_file_path = os.path.abspath(os.path.join(os.getcwd(), temp_file_name))
@@ -29,21 +32,18 @@ class BaseChecker(object):
                 f.write(content.encode("utf-8"))
 
             for linter in self.linters:
-                self.errors_list += linter.lint(temp_file_path, content)
+                self.errors += linter.lint(temp_file_path, content)
         finally:
             os.remove(temp_file_path)
 
     def get_errors_json(self):
-        errors_list = [error.get_error() for error in self.errors_list]
-        return json.dumps(errors_list)
+        return self.errors.get_errors_json()
 
 
 
 class CheckPhp(BaseChecker):
     def __init__(self):
         self.file_extension = 'php'
-
-        self.errors_list = []
 
         self.linters = [
             PhpCodeSniffer(),
@@ -55,8 +55,6 @@ class CheckJavaScript(BaseChecker):
     def __init__(self):
         self.file_extension = 'js'
 
-        self.errors_list = []
-
         self.linters = [
             JsHint(),
         ]
@@ -65,8 +63,6 @@ class CheckJavaScript(BaseChecker):
 class CheckCss(BaseChecker):
     def __init__(self):
         self.file_extension = 'css'
-
-        self.errors_list = []
 
         self.linters = [
             CssLint(),
@@ -78,8 +74,6 @@ class CheckHtml(BaseChecker):
     def __init__(self):
         self.file_extension = 'html'
 
-        self.errors_list = []
-
         self.linters = [
             HtmlTidy(),
         ]
@@ -88,8 +82,6 @@ class CheckHtml(BaseChecker):
 class CheckPython(BaseChecker):
     def __init__(self):
         self.file_extension = 'py'
-
-        self.errors_list = []
 
         self.linters = [
             Pep8(),
@@ -101,8 +93,6 @@ class CheckPython(BaseChecker):
 class CheckLess(BaseChecker):
     def __init__(self):
         self.file_extension = 'less'
-
-        self.errors_list = []
 
         self.linters = [
             Less(),
