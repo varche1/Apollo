@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-s
+# -*- coding: utf-8 -*-
 
 import os
 import logging
@@ -47,7 +47,7 @@ class Apollo():
 
             self.__queue.add(task)
         else:
-            logging.debug("Core: File has not correct syntax")
+            logging.debug("Apollo: File has not correct syntax")
             sublime.status_message("Apollo: File has not correct syntax")
 
     def get_settings(self):
@@ -58,10 +58,21 @@ class Apollo():
 
     def __on_task_finish(self, task):
         if task.get_status() == Task.Statuses.NORMAL_FINISH:
-            self.__messenger.schedule(
-                str(task.get_option('view_id')),
-                task.get_result(),
-                True
+            result = task.get_result()
+
+            if result['status'] and result['code'] == Task.ResultCodes.OK:
+                self.__messenger.schedule(
+                    str(task.get_option('view_id')),
+                    result['data'],
+                    True
+                )
+            elif result['code'] == Task.ResultCodes.NO_LINTER:
+                sublime.status_message(
+                "Apollo: Check failed, backend don't have valid linter!"
+            )
+            else:
+                sublime.status_message(
+                "Apollo: Check failed, info: %s" % result['message']
             )
         else:
             sublime.status_message(
@@ -73,7 +84,7 @@ class ApolloMessager():
     def __init__(self, settings):
         self.__panel_show_on = None
         self.__panel_visible = False
-        print('init')
+
         self.__data = {}
         self.__settings = settings
 
@@ -89,48 +100,46 @@ class ApolloMessager():
         if self.__panel_visible:
             window.run_command('hide_overlay')
 
-        print(self.__panel_visible)
-        print(self.__panel_show_on)
-        print(view_id)
+        if view_id in self.__data:
+            view = window.active_view()
 
-        if view_id in self.__data and view_id != self.__panel_show_on:
             errors_list = self.__data[view_id]
             
             list_for_show = []
             regions = []
             for record in errors_list:
-                list_for_show.append(
-                    "[{severity}] {type}: {message} on line {line}".format(
+                line_content = view.substr(view.full_line(view.text_point(record['line_start'], 0))).strip()
+
+                list_for_show.append([
+                    "[{severity}]{type}: {message}".format(
                         severity=record['severity'].upper(),
-                        type=record['type'],
+                        type=(" %s" % record['type']) if record['type'] else "",
                         message=record['message'],
-                        line=record['line_start']
+                    ),
+                    "{line}: {line_content}".format(
+                        line=record['line_start'],
+                        line_content=line_content,
                     )
-                )
-                pt = window.active_view().text_point(record['line_start'] - 1, 0)
-                region_line = window.active_view().line(pt)
+                ])
+                pt = view.text_point(record['line_start'] - 1, 0)
+                region_line = view.line(pt)
 
                 regions.append(region_line)
 
             window.show_quick_panel(list_for_show, self.__on_quick_panel_done)
 
-            self.__panel_show_on = view_id
             self.__panel_visible = True
-
-            print(self.__panel_visible)
 
             icon = 'dot' if self.__settings.get('apollo_show_marks') else ''
             outline = sublime.DRAW_OUTLINED if self.__settings.get('apollo_outline_errors') else sublime.HIDDEN
             if self.__settings.get('apollo_show_marks') or self.__settings.get('apollo_outline_errors'):
-                window.active_view().add_regions(
+                view.add_regions(
                     "errors_%s" % view_id, regions, "string", icon, outline
                 )
         else:
             if self.__panel_visible:
                 window.run_command('hide_overlay')
                 self.__panel_visible = False
-
-            self.__panel_show_on = None
 
     def __on_quick_panel_done(self, picked):
         self.__panel_visible = False

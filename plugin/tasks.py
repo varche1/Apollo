@@ -22,6 +22,11 @@ class Task(threading.Thread):
         HTTP_ERROR=12,
     )
 
+    ResultCodes = enum(
+        OK=200,
+        NO_LINTER=510,
+    )
+
     def __init__(self, **params):
         self.__params = params
         
@@ -61,7 +66,6 @@ class Task(threading.Thread):
             )
         except urllib.error.HTTPError as e:
             self.__status = Task.Statuses.HTTP_ERROR
-
             logging.debug("Task: Error '%s' in task %s" % 
                 (e, id(self))
             )
@@ -95,7 +99,7 @@ class Task(threading.Thread):
 
         data = {
             'language': self.__params['language'],
-            'source': base64.b64encode(self.__params['source'].encode('ascii'))
+            'source': base64.b64encode(self.__params['source'].encode('utf-8'))
         }
 
         req.add_data(urllib.parse.urlencode(data).encode('ascii'))
